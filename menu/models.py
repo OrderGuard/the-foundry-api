@@ -1,0 +1,114 @@
+
+
+from django.db import models
+from django.utils.safestring import mark_safe
+from model_utils.managers import InheritanceManager
+
+
+class Menu(models.Model):
+    name = models.CharField(max_length=100)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["start_time"]
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+
+    menu = models.ForeignKey(
+        Menu,
+        on_delete=models.CASCADE,
+        related_name="categories",
+    )
+
+    name = models.CharField(max_length=50)
+    position = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['position']  # ✅ required for sortable inline admin
+
+    def __str__(self):
+        return self.name
+
+
+class MenuItem(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+    image = models.ImageField(
+        upload_to='menu_images/',
+        null=True,
+        blank=True
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='items',
+        default=1
+    )
+    position = models.PositiveIntegerField(default=0)
+    toppings = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        blank=True,
+        related_name='topped_items',
+        limit_choices_to={'category__name__icontains': 'toppings'}
+    )
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    available = models.BooleanField(default=True)
+    objects = InheritanceManager()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["position"]
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name})"
+
+
+class MealComponent(models.Model):
+    PRICING_CHOICES = [
+        ("included", "Included in meal price"),
+        ("addon", "Add-on (adds price)")
+    ]
+    meal = models.ForeignKey('Meal', on_delete=models.CASCADE, related_name='components')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    required = models.BooleanField(default=True)
+    max_selections = models.PositiveIntegerField(
+        default=1,
+        help_text="1 for single selection (radio), more than 1 for multiple selections (checkboxes)"
+    )
+    pricing_type = models.CharField(
+        max_length=20,
+        choices=PRICING_CHOICES,
+        default="included"
+    )
+
+    def __str__(self):
+        return f"{self.meal.name} - {self.category.name}"
+
+    def category_options(self):
+        items = self.category.items.all()
+        if not items:
+            return "No items"
+        return mark_safe("<ul style='margin-left: 1em;'>" + "".join([f"<li>{i.name}</li>" for i in items]) + "</ul>")
+
+    category_options.short_description = "Available Items"
+
+
+class Meal(MenuItem):
+    pass
+
+
+class Topping(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=5, decimal_places=2)
+    applicable_to = models.ManyToManyField(MenuItem, blank=True)
+
+    def __str__(self):
+        return self.name
