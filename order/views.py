@@ -214,7 +214,7 @@ def create_payment(request):
     # Webhook Url
     WEBHOOK_URL = config("WEBHOOK_URL")
 
-    merchant = Merchant.objects.get(name="kk83")
+    merchant = Merchant.objects.get(name="foundry")
     mollie = MollieService(merchant)
 
     # Decide test/live mode based on merchant
@@ -226,7 +226,7 @@ def create_payment(request):
                 "currency": "GBP",
                 "value": f"{total_amount:.2f}",
             },
-            "description": "KK83 - New order payment",
+            "description": "The Foundry - New order payment",
             "profileId": merchant.mollie_profile_id,
             "redirectUrl": REDIRECT_URL,
             "webhookUrl": WEBHOOK_URL,
@@ -373,7 +373,7 @@ def mollie_webhook(request):
     # -----------------------------
     # You can improve this later (multi-merchant)
     from merchant.models import Merchant
-    merchant = Merchant.objects.get(name="kk83")
+    merchant = Merchant.objects.get(name="foundry")
     logger.info(f"[MOLLIE] Access token prefix: {merchant.oauth_access_token[:6]}")
 
     # -----------------------------
