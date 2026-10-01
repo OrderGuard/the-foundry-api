@@ -23,12 +23,14 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Need to add url of endpoint and frontend
 CSRF_TRUSTED_ORIGINS = [
     "https://thefoundrykitchen.co.uk",
+    "https://www.thefoundrykitchen.co.uk",
     "https://the-foundry-frontend.vercel.app",
 ]
 
 # Allow your Vercel frontend
 CORS_ALLOWED_ORIGINS = [
     "https://thefoundrykitchen.co.uk",
+    "https://www.thefoundrykitchen.co.uk",
     "https://the-foundry-frontend.vercel.app",
 ]
 
