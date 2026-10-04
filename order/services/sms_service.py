@@ -14,7 +14,7 @@ def send_order_sms_notification(order, status=None):
 
     if status == "preparing":
         message = (
-            f"🍔 Klub Kitchen 83\n\n"
+            f"🍔 The Foundry\n\n"
             f"Hi {order.customer_name or 'there'},\n\n"
             f"Your order #{order.id} is now being prepared.\n\n"
             f"Estimated time: {order.estimated_time} mins.\n\n"

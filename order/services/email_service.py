@@ -49,7 +49,7 @@ def send_order_email_notification(order, status=None):
 
     <p><a href="{tracking_url}">Track your order</a></p>
 
-    <p>Thank you for ordering with Klub Kitchen 83 🍕</p>
+    <p>Thank you for ordering with The Foundry</p>
     """
 
     try:
@@ -66,7 +66,7 @@ def send_order_email_notification(order, status=None):
             html_content=html_content,
             sender={
                 "email": "info@orderup.space",
-                "name": "Klub Kitchen 83 Restaurant"
+                "name": "The Foundry"
             },
         )
 
