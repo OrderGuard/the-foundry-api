@@ -651,18 +651,18 @@ def mollie_webhook(request):
                 logger.warning(f"[MOLLIE] WebSocket failed: {repr(e)}")
 
             # --- Email ---
-            # try:
-                # send_order_email_notification(order, created=True)
-                # logger.info(f"[MOLLIE] Email sent for order {order.id}")
-            # except Exception as e:
-                # logger.error(f"[MOLLIE] Email failed for order {order.id}: {repr(e)}")
+            try:
+                send_order_email_notification(order, created=True)
+                logger.info(f"[MOLLIE] Email sent for order {order.id}")
+            except Exception as e:
+                logger.error(f"[MOLLIE] Email failed for order {order.id}: {repr(e)}")
 
             # --- SMS ---
-            # try:
-                # send_order_sms_notification(order, created=True)
-                # logger.info(f"[MOLLIE] SMS sent for order {order.id}")
-            # except Exception as e:
-                # logger.error(f"[MOLLIE] SMS failed for order {order.id}: {repr(e)}")
+            try:
+                send_order_sms_notification(order, created=True)
+                logger.info(f"[MOLLIE] SMS sent for order {order.id}")
+            except Exception as e:
+                logger.error(f"[MOLLIE] SMS failed for order {order.id}: {repr(e)}")
 
             # --- Push ---
             try:

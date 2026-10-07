@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def send_order_sms_notification(order, status=None):
+def send_order_sms_notification(order, status=None, created=False):
 
     if not order.phone_number:
         logger.warning(f"[SMS] Order {order.id} has no phone number")

@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def send_order_email_notification(order, status=None):
+def send_order_email_notification(order, status=None, created=False):
 
     if not order.customer_email:
         logger.warning(f"[EMAIL] Order {order.id} has no customer email")
