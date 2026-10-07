@@ -59,11 +59,7 @@ class MenuAdmin(admin.ModelAdmin):
         "name",
         "start_time",
         "end_time",
-        "is_active",
-    )
-
-    list_filter = (
-        "is_active",
+        "open_status",
     )
 
     search_fields = (
@@ -78,8 +74,11 @@ class MenuAdmin(admin.ModelAdmin):
         "name",
         "start_time",
         "end_time",
-        "is_active",
     )
+
+    @admin.display(boolean=True, description="Open")
+    def open_status(self, obj):
+        return obj.is_open
 
 
 # ============================================================

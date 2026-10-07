@@ -105,6 +105,10 @@ class MealSerializer(serializers.ModelSerializer):
 
 
 class MenuSerializer(serializers.ModelSerializer):
+    is_open = serializers.ReadOnlyField()
+    opening_time_display = serializers.ReadOnlyField()
+    closing_time_display = serializers.ReadOnlyField()
+
     class Meta:
         model = Menu
         fields = [
@@ -112,6 +116,8 @@ class MenuSerializer(serializers.ModelSerializer):
             "name",
             "start_time",
             "end_time",
-            "is_active",
+            "is_open",
+            "opening_time_display",
+            "closing_time_display",
         ]
 
