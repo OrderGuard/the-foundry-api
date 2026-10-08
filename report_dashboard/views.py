@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Sum, Count, F, DecimalField, ExpressionWrapper
+from django.db.models import Sum, Count
 from django.db.models.functions import ExtractHour, TruncDate
 from django.utils import timezone
 from datetime import timedelta
@@ -14,14 +14,16 @@ class DashboardAPIView(APIView):
     def get(self, request):
         period = request.query_params.get("period", "daily")
 
-        # --------------------------------
-        # Use local timezone
-        # --------------------------------
+        # ============================================================
+        # USE LOCAL TIMEZONE
+        # ============================================================
+
         now = timezone.localtime(timezone.now())
 
-        # --------------------------------
-        # Determine reporting period
-        # --------------------------------
+        # ============================================================
+        # DETERMINE REPORTING PERIOD
+        # ============================================================
+
         if period == "daily":
 
             start = now.replace(
@@ -65,17 +67,19 @@ class DashboardAPIView(APIView):
                 status=400,
             )
 
-        # --------------------------------
-        # Orders inside reporting period
-        # --------------------------------
+        # ============================================================
+        # ORDERS INSIDE REPORTING PERIOD
+        # ============================================================
+
         orders = Order.objects.filter(
             created_at__gte=start,
             created_at__lt=now,
         )
 
-        # --------------------------------
-        # Debug
-        # --------------------------------
+        # ============================================================
+        # DEBUG
+        # ============================================================
+
         print("================================")
         print("PERIOD:", period)
         print("NOW:", now)
@@ -87,38 +91,45 @@ class DashboardAPIView(APIView):
         # REVENUE
         # ============================================================
         #
-        # Order total:
+        # IMPORTANT:
         #
-        # subtotal
-        # + service fee
-        # + delivery charge
-        # - discount
+        # OrderItem.total_price is already the LINE TOTAL.
+        #
+        # Example:
+        #
+        # item_price = £11.50
+        # quantity   = 2
+        # total_price = £23.00
+        #
+        # Therefore:
+        #
+        # DO NOT do:
+        #
+        # total_price * quantity
+        #
+        # because that would become:
+        #
+        # £23 × 2 = £46  ❌
+        #
+        # Instead:
+        #
+        # Sum(total_price) = £23  ✅
         #
         # ============================================================
 
-        item_revenue_expression = ExpressionWrapper(
-            F("total_price") * F("quantity"),
-            output_field=DecimalField(
-                max_digits=12,
-                decimal_places=2,
-            ),
-        )
-
-        # --------------------------------
-        # Item subtotal
-        # --------------------------------
         item_subtotal = (
             OrderItem.objects
             .filter(order__in=orders)
             .aggregate(
-                total=Sum(item_revenue_expression)
+                total=Sum("total_price")
             )["total"]
             or Decimal("0.00")
         )
 
-        # --------------------------------
-        # Service fees
-        # --------------------------------
+        # ============================================================
+        # SERVICE FEES
+        # ============================================================
+
         service_fee_total = (
             orders.aggregate(
                 total=Sum("service_fee")
@@ -126,9 +137,10 @@ class DashboardAPIView(APIView):
             or Decimal("0.00")
         )
 
-        # --------------------------------
-        # Delivery charges
-        # --------------------------------
+        # ============================================================
+        # DELIVERY CHARGES
+        # ============================================================
+
         delivery_charge_total = (
             orders.aggregate(
                 total=Sum("delivery_charge")
@@ -136,9 +148,10 @@ class DashboardAPIView(APIView):
             or Decimal("0.00")
         )
 
-        # --------------------------------
-        # Discounts
-        # --------------------------------
+        # ============================================================
+        # DISCOUNTS
+        # ============================================================
+
         discount_total = (
             orders.aggregate(
                 total=Sum("discount")
@@ -146,9 +159,26 @@ class DashboardAPIView(APIView):
             or Decimal("0.00")
         )
 
-        # --------------------------------
+        # ============================================================
         # FINAL REVENUE
-        # --------------------------------
+        # ============================================================
+        #
+        # subtotal
+        # + service fee
+        # + delivery charge
+        # - discount
+        #
+        # Example:
+        #
+        # £23.00
+        # + £0.75
+        # + £0.00
+        # - £5.75
+        # ----------
+        # £18.00
+        #
+        # ============================================================
+
         total_revenue = (
             item_subtotal
             + service_fee_total
@@ -159,7 +189,7 @@ class DashboardAPIView(APIView):
         # Never allow negative revenue
         total_revenue = max(
             total_revenue,
-            Decimal("0.00")
+            Decimal("0.00"),
         )
 
         # ============================================================
@@ -236,10 +266,15 @@ class DashboardAPIView(APIView):
         # REVENUE TREND
         # ============================================================
         #
-        # IMPORTANT:
-        # Revenue trend must also include:
+        # For each date:
         #
-        # items + service fee + delivery - discount
+        # item subtotal
+        # + service fee
+        # + delivery charge
+        # - discount
+        #
+        # IMPORTANT:
+        # total_price is already the line total.
         #
         # ============================================================
 
@@ -259,21 +294,34 @@ class DashboardAPIView(APIView):
 
             date = date_item["date"]
 
+            # Orders for this date
             daily_orders = orders.filter(
                 created_at__date=date
             )
 
-            # Item subtotal for this day
+            # --------------------------------------------------------
+            # Daily item subtotal
+            # --------------------------------------------------------
+            #
+            # DO NOT multiply total_price by quantity.
+            #
+            # total_price is already:
+            #
+            # unit price × quantity
+            #
             daily_subtotal = (
                 OrderItem.objects
                 .filter(order__in=daily_orders)
                 .aggregate(
-                    total=Sum(item_revenue_expression)
+                    total=Sum("total_price")
                 )["total"]
                 or Decimal("0.00")
             )
 
-            # Service fees
+            # --------------------------------------------------------
+            # Daily service fee
+            # --------------------------------------------------------
+
             daily_service_fee = (
                 daily_orders.aggregate(
                     total=Sum("service_fee")
@@ -281,7 +329,10 @@ class DashboardAPIView(APIView):
                 or Decimal("0.00")
             )
 
-            # Delivery charges
+            # --------------------------------------------------------
+            # Daily delivery charge
+            # --------------------------------------------------------
+
             daily_delivery_charge = (
                 daily_orders.aggregate(
                     total=Sum("delivery_charge")
@@ -289,13 +340,20 @@ class DashboardAPIView(APIView):
                 or Decimal("0.00")
             )
 
-            # Discounts
+            # --------------------------------------------------------
+            # Daily discount
+            # --------------------------------------------------------
+
             daily_discount = (
                 daily_orders.aggregate(
                     total=Sum("discount")
                 )["total"]
                 or Decimal("0.00")
             )
+
+            # --------------------------------------------------------
+            # Daily final revenue
+            # --------------------------------------------------------
 
             daily_total = (
                 daily_subtotal
@@ -304,19 +362,22 @@ class DashboardAPIView(APIView):
                 - daily_discount
             )
 
+            # Never allow negative revenue
             daily_total = max(
                 daily_total,
-                Decimal("0.00")
+                Decimal("0.00"),
             )
 
-            revenue_trend.append({
-                "date": date,
-                "revenue": daily_total,
-            })
+            revenue_trend.append(
+                {
+                    "date": date,
+                    "revenue": daily_total,
+                }
+            )
 
-        # --------------------------------
-        # Trend data
-        # --------------------------------
+        # ============================================================
+        # TREND DATA
+        # ============================================================
 
         trend_labels = [
             str(item["date"])
@@ -352,7 +413,6 @@ class DashboardAPIView(APIView):
                         2,
                     ),
 
-                    # Optional breakdown
                     "subtotal": float(
                         item_subtotal
                     ),
