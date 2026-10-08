@@ -107,8 +107,8 @@ class MollieService:
         logger.info(f"Fetching payment in testmode={is_test}")
 
         return client.payments.get(
-            # payment_id
-            payment_id,
-            testmode="true" if is_test else "false",
+            payment_id
+            # payment_id,
+            # testmode="true" if is_test else "false",
         )
 
