@@ -272,11 +272,11 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-dev-key")
-# CELERY_BROKER_URL = os.environ.get("REDIS_URL")
-# CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
+CELERY_BROKER_URL = os.environ.get("REDIS_URL")
+CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+# CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 
