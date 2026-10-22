@@ -82,26 +82,21 @@ class MenuViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=["get"],
-        url_path=r"(?P<menu_name>[^/.]+)"
+        url_path=r"by-name/(?P<menu_name>[^/.]+)/categories",
+        url_name="categories-by-name",
     )
     def categories(self, request, menu_name=None):
         try:
-            menu = Menu.objects.get(
-                name__iexact=menu_name
-            )
+            menu = Menu.objects.get(name__iexact=menu_name)
         except Menu.DoesNotExist:
             return Response(
                 {"detail": "Menu not found."},
-                status=404
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        categories = menu.categories.all()
-
         serializer = CategorySerializer(
-            categories,
+            menu.categories.all(),
             many=True,
-            context={"request": request}
+            context={"request": request},
         )
-
         return Response(serializer.data)
-

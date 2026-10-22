@@ -15,6 +15,7 @@ import os
 
 from datetime import timedelta
 import environ
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -261,3 +262,29 @@ EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_KEY")
 
 # DEFAULT_FROM_EMAIL = "KK83 Orders <info@order-guard.com>"
 DEFAULT_FROM_EMAIL = "jmrcas.bis@gmail.com"
+
+### Celery Settings
+CELERY_BEAT_SCHEDULE = {
+    "manage-menu-schedules-every-minute": {
+        "task": "menu.tasks.manage_menu_schedules",
+        "schedule": crontab(minute="*"),
+    },
+}
+
+# SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-dev-key")
+# CELERY_BROKER_URL = os.environ.get("REDIS_URL")
+# CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "Europe/London"
+
+CELERY_ENABLE_UTC = True
+

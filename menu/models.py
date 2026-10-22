@@ -6,10 +6,45 @@ from model_utils.managers import InheritanceManager
 from django.utils import timezone
 
 
+# class Menu(models.Model):
+    # name = models.CharField(max_length=100)
+    # start_time = models.TimeField()
+    # end_time = models.TimeField()
+
+    # class Meta:
+        # ordering = ["start_time"]
+
+    # def __str__(self):
+        # return self.name
+
+    # @property
+    # def is_open(self):
+        # now = timezone.localtime().time()
+        # return self.start_time <= now <= self.end_time
+
+    # @property
+    # def opening_time_display(self):
+        # return self.start_time.strftime("%-I:%M %p")
+
+    # @property
+    # def closing_time_display(self):
+        # return self.end_time.strftime("%-I:%M %p")
+
+
 class Menu(models.Model):
     name = models.CharField(max_length=100)
     start_time = models.TimeField()
     end_time = models.TimeField()
+
+    # Actual status controlled by staff or automation
+    is_open = models.BooleanField(default=False)
+
+    # Prevent duplicate reminders within the same minute
+    last_open_reminder_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
 
     class Meta:
         ordering = ["start_time"]
@@ -18,9 +53,9 @@ class Menu(models.Model):
         return self.name
 
     @property
-    def is_open(self):
+    def is_within_schedule(self):
         now = timezone.localtime().time()
-        return self.start_time <= now <= self.end_time
+        return self.start_time <= now < self.end_time
 
     @property
     def opening_time_display(self):
