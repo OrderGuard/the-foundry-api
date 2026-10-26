@@ -52,6 +52,10 @@ class Menu(models.Model):
     def __str__(self):
         return self.name
 
+    # @property
+    # def is_within_schedule(self):
+        # now = timezone.localtime().time()
+        # return self.start_time <= now < self.end_time
     @property
     def is_within_schedule(self):
         now = timezone.localtime().time()

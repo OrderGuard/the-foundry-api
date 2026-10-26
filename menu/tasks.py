@@ -51,15 +51,12 @@ def send_menu_opening_reminder(menu):
 
 @shared_task
 def manage_menu_schedules():
-
     now = timezone.localtime()
     current_tz = timezone.get_current_timezone()
 
     for menu in Menu.objects.all():
 
-        # This implementation assumes opening and closing
-        # occur on the same calendar day.
-
+        # Build today's opening and closing datetimes.
         opening_dt = timezone.make_aware(
             datetime.combine(now.date(), menu.start_time),
             current_tz,
@@ -73,15 +70,10 @@ def manage_menu_schedules():
         # ----------------------------------
         # 1. AUTOMATIC CLOSE
         # ----------------------------------
-
         if now >= closing_dt:
-
             if menu.is_open:
                 menu.is_open = False
-
-                menu.save(
-                    update_fields=["is_open"],
-                )
+                menu.save(update_fields=["is_open"])
 
                 logger.info(
                     "Menu %s automatically closed",
@@ -91,32 +83,37 @@ def manage_menu_schedules():
             continue
 
         # ----------------------------------
-        # 2. REMINDER STARTS ONE MINUTE
-        # BEFORE OPENING
+        # 2. BEFORE OPENING REMINDER WINDOW
         # ----------------------------------
-
-        reminder_start = opening_dt - timedelta(
-            minutes=1,
-        )
+        reminder_start = opening_dt - timedelta(minutes=1)
 
         if now < reminder_start:
             continue
 
         # ----------------------------------
-        # 3. STOP REMINDERS WHEN OPEN
+        # 3. AUTOMATICALLY OPEN AT START TIME
         # ----------------------------------
+        if now >= opening_dt and not menu.is_open:
+            menu.is_open = True
+            menu.save(update_fields=["is_open"])
 
+            logger.info(
+                "Menu %s automatically opened",
+                menu.id,
+            )
+
+        # ----------------------------------
+        # 4. STOP REMINDERS WHEN OPEN
+        # ----------------------------------
         if menu.is_open:
             continue
 
         # ----------------------------------
-        # 4. SEND REMINDER EVERY MINUTE
+        # 5. SEND OPENING REMINDER
         # ----------------------------------
-
         last_reminder = menu.last_open_reminder_at
 
         if last_reminder is not None:
-
             elapsed = (
                 now - timezone.localtime(last_reminder)
             ).total_seconds()
@@ -127,13 +124,9 @@ def manage_menu_schedules():
         send_menu_opening_reminder(menu)
 
         menu.last_open_reminder_at = now
-
-        menu.save(
-            update_fields=["last_open_reminder_at"],
-        )
+        menu.save(update_fields=["last_open_reminder_at"])
 
         logger.info(
             "Opening reminder sent for menu %s",
             menu.id,
         )
-
