@@ -108,6 +108,8 @@ class MenuSerializer(serializers.ModelSerializer):
     is_open = serializers.ReadOnlyField()
     opening_time_display = serializers.ReadOnlyField()
     closing_time_display = serializers.ReadOnlyField()
+    is_temporarily_closed = serializers.ReadOnlyField()
+    temporary_closed_until = serializers.ReadOnlyField()
 
     class Meta:
         model = Menu
@@ -119,5 +121,7 @@ class MenuSerializer(serializers.ModelSerializer):
             "is_open",
             "opening_time_display",
             "closing_time_display",
+            "is_temporarily_closed",
+            "temporary_closed_until",
         ]
 

@@ -130,3 +130,17 @@ def manage_menu_schedules():
             "Opening reminder sent for menu %s",
             menu.id,
         )
+
+
+@shared_task
+def update_menu_status():
+    for menu in Menu.objects.all():
+        should_be_open = (
+            menu.is_within_schedule
+            and not menu.is_temporarily_closed
+        )
+
+        if menu.is_open != should_be_open:
+            menu.is_open = should_be_open
+            menu.save(update_fields=["is_open"])
+

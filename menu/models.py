@@ -36,10 +36,14 @@ class Menu(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
 
-    # Actual status controlled by staff or automation
     is_open = models.BooleanField(default=False)
 
-    # Prevent duplicate reminders within the same minute
+    # Temporarily disable this menu until a specific date and time
+    temporary_closed_until = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
     last_open_reminder_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -52,14 +56,24 @@ class Menu(models.Model):
     def __str__(self):
         return self.name
 
-    # @property
-    # def is_within_schedule(self):
-        # now = timezone.localtime().time()
-        # return self.start_time <= now < self.end_time
     @property
     def is_within_schedule(self):
         now = timezone.localtime().time()
         return self.start_time <= now < self.end_time
+
+    @property
+    def is_temporarily_closed(self):
+        return (
+            self.temporary_closed_until is not None
+            and timezone.now() < self.temporary_closed_until
+        )
+
+    def update_open_status(self):
+        self.is_open = (
+            self.is_within_schedule
+            and not self.is_temporarily_closed
+        )
+        self.save(update_fields=["is_open"])
 
     @property
     def opening_time_display(self):

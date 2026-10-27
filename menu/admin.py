@@ -53,6 +53,11 @@ class CategoryInline(SortableInlineAdminMixin, admin.TabularInline):
 # MENU ADMIN
 # ============================================================
 
+
+from django.contrib import admin
+from .models import Menu
+
+
 @admin.register(Menu)
 class MenuAdmin(admin.ModelAdmin):
     list_display = (
@@ -60,25 +65,32 @@ class MenuAdmin(admin.ModelAdmin):
         "start_time",
         "end_time",
         "open_status",
+        "temporary_closed_status",
+        "temporary_closed_until",
     )
 
-    search_fields = (
-        "name",
-    )
+    search_fields = ("name",)
 
-    ordering = (
-        "start_time",
-    )
+    ordering = ("start_time",)
 
     fields = (
         "name",
         "start_time",
         "end_time",
+        "is_open",
+        "temporary_closed_until",
     )
 
     @admin.display(boolean=True, description="Open")
     def open_status(self, obj):
         return obj.is_open
+
+    @admin.display(
+        boolean=True,
+        description="Temporarily Closed",
+    )
+    def temporary_closed_status(self, obj):
+        return obj.is_temporarily_closed
 
 
 # ============================================================
